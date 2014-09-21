@@ -42,6 +42,7 @@ class wechatCallbackapi
                     $resultStr = $this -> handleEvent($postObj);
                     break;
             }
+            //$resultStr is the final output
             echo $resultStr;
         }
         else
@@ -59,14 +60,11 @@ class wechatCallbackapi
         //$keyword is the message from the user
         $keyword = trim($postObj -> Content);
 
-        if (!empty($keyword))
+        switch ($keyword)
         {
-            switch ($keyword)
-            {
-                case "Testing":
-                    $contentStr = "Pass!";
-                    break;
-            }
+            case "Testing":
+                $contentStr = "Pass!";
+                break;
         }
         $resultStr = $this -> responseText($postObj, $contentStr);
         return $resultStr;
@@ -77,6 +75,7 @@ class wechatCallbackapi
         //$contentStr is the message we want to send back
         $contentStr = "";
 
+        //get the type of this event
         switch ($postObj -> Event)
         {
             case "subscribe":
