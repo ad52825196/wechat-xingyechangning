@@ -21,6 +21,10 @@ class wechatCallbackapi
 
     public function responseMsg()
     {
+        //connect to database
+        include_once "config.php";
+        $mydb -> query("set names utf8");
+
         //get post data, may be due to the different environments
         $postStr = $GLOBALS["HTTP_RAW_POST_DATA"];
 
@@ -36,10 +40,10 @@ class wechatCallbackapi
             switch ($msgType)
             {
                 case "text":
-                    $resultStr = $this -> handleText($postObj);
+                    $resultStr = $this -> handleText($mydb, $postObj);
                     break;
                 case "event":
-                    $resultStr = $this -> handleEvent($postObj);
+                    $resultStr = $this -> handleEvent($mydb, $postObj);
                     break;
             }
             //$resultStr is the final output
@@ -52,7 +56,7 @@ class wechatCallbackapi
         }
     }
 
-    public function handleText($postObj)
+    public function handleText($mydb, $postObj)
     {
         //$contentStr is the message we want to send back
         $contentStr = "";
@@ -60,28 +64,33 @@ class wechatCallbackapi
         //$keyword is the message from the user
         $keyword = trim($postObj -> Content);
 
-        switch ($keyword)
-        {
-            case "Testing":
-                $contentStr = "Pass!";
+        $result = $mydb -> query("SELECT * FROM keyword");
+        while ($row = $result -> fetch_array())
+            if ($row["keyword"] == $keyword)
+            {
+                $contentStr = $row["reply"];
                 break;
-        }
+            }
+
         $resultStr = $this -> responseText($postObj, $contentStr);
         return $resultStr;
     }
 
-    public function handleEvent($postObj)
+    public function handleEvent($mydb, $postObj)
     {
         //$contentStr is the message we want to send back
         $contentStr = "";
 
         //get the type of this event
-        switch ($postObj -> Event)
-        {
-            case "subscribe":
-                $contentStr = "感谢您关注兴业长宁微信服务号！";
+        $eventType = $postObj -> Event;
+
+        $result = $mydb -> query("SELECT * FROM event");
+        while ($row = $result -> fetch_array())
+            if ($row["event"] == $eventType)
+            {
+                $contentStr = $row["reply"];
                 break;
-        }
+            }
         $resultStr = $this -> responseText($postObj, $contentStr);
         return $resultStr;
     }
@@ -122,5 +131,4 @@ class wechatCallbackapi
             return false;
     }
 }
-
 ?>
