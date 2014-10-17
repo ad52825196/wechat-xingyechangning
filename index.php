@@ -21,7 +21,7 @@ class wechatCallbackapi
 
     public function responseMsg()
     {
-        //connect to database
+        //connect to database and get an object named $mydb
         include_once "config.php";
         $mydb -> query("set names utf8");
 
@@ -36,6 +36,7 @@ class wechatCallbackapi
             libxml_disable_entity_loader(true);
             $postObj = simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
             $msgType = trim($postObj -> MsgType);
+            $resultStr = "";
 
             switch ($msgType)
             {
@@ -97,6 +98,9 @@ class wechatCallbackapi
 
     public function responseText($postObj, $contentStr)
     {
+        if (strlen($contentStr) == 0)
+            return ""
+
         $fromUsername = $postObj -> FromUserName;
         $toUsername = $postObj -> ToUserName;
         $time = time();
