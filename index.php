@@ -7,6 +7,14 @@ $wechatObj -> responseMsg();
 
 class wechatCallbackapi
 {
+    private $mydb;
+
+    public function __construct()
+    {
+        //connect to database and get an object named $mydb
+        require_once "config.php";
+    }
+
     public function valid()
     {
         $echoStr = $_GET["echostr"];
@@ -15,16 +23,12 @@ class wechatCallbackapi
         if ($this -> checkSignature())
         {
             echo $echoStr;
-            exit;
+            exit();
         }
     }
 
     public function responseMsg()
     {
-        //connect to database and get an object named $mydb
-        include_once "config.php";
-        $mydb -> query("set names utf8");
-
         //get post data, may be due to the different environments
         $postStr = $GLOBALS["HTTP_RAW_POST_DATA"];
 
@@ -41,23 +45,24 @@ class wechatCallbackapi
             switch ($msgType)
             {
                 case "text":
-                    $resultStr = $this -> handleText($mydb, $postObj);
+                    $resultStr = $this -> handleText($postObj);
                     break;
                 case "event":
-                    $resultStr = $this -> handleEvent($mydb, $postObj);
+                    $resultStr = $this -> handleEvent($postObj);
                     break;
             }
             //$resultStr is the final output
             echo $resultStr;
+            exit();
         }
         else
         {
             echo "";
-            exit;
+            exit();
         }
     }
 
-    public function handleText($mydb, $postObj)
+    public function handleText($postObj)
     {
         //$contentStr is the message we want to send back
         $contentStr = "";
@@ -65,7 +70,7 @@ class wechatCallbackapi
         //$keyword is the message from the user
         $keyword = trim($postObj -> Content);
 
-        $result = $mydb -> query("SELECT * FROM keyword");
+        $result = $this -> mydb -> query("SELECT * FROM keyword");
         while ($row = $result -> fetch_array())
             if ($row["keyword"] == $keyword)
             {
@@ -77,7 +82,7 @@ class wechatCallbackapi
         return $resultStr;
     }
 
-    public function handleEvent($mydb, $postObj)
+    public function handleEvent($postObj)
     {
         //$contentStr is the message we want to send back
         $contentStr = "";
@@ -85,13 +90,14 @@ class wechatCallbackapi
         //get the type of this event
         $eventType = $postObj -> Event;
 
-        $result = $mydb -> query("SELECT * FROM event");
+        $result = $this -> mydb -> query("SELECT * FROM event");
         while ($row = $result -> fetch_array())
             if ($row["event"] == $eventType)
             {
                 $contentStr = $row["reply"];
                 break;
             }
+
         $resultStr = $this -> responseText($postObj, $contentStr);
         return $resultStr;
     }
@@ -99,7 +105,7 @@ class wechatCallbackapi
     public function responseText($postObj, $contentStr)
     {
         if (strlen($contentStr) == 0)
-            return ""
+            return "";
 
         $fromUsername = $postObj -> FromUserName;
         $toUsername = $postObj -> ToUserName;
