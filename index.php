@@ -2,8 +2,10 @@
 //define your token
 define("TOKEN", "weixin");
 $wechatObj = new wechatCallbackapi();
-$wechatObj -> responseMsg();
-//$wechatObj -> valid();
+if (isset($_GET["echostr"]))
+    $wechatObj -> valid();
+else
+    $wechatObj -> responseMsg();
 
 class wechatCallbackapi
 {
@@ -70,13 +72,11 @@ class wechatCallbackapi
         //$keyword is the message from the user
         $keyword = trim($postObj -> Content);
 
-        $result = $this -> mydb -> query("SELECT * FROM keyword");
-        while ($row = $result -> fetch_array())
-            if ($row["keyword"] == $keyword)
-            {
-                $contentStr = $row["reply"];
-                break;
-            }
+        $sql = "SELECT reply FROM keyword WHERE keyword = '%s'";
+        $sql = sprintf($sql, $keyword);
+        $result = $this -> mydb -> query($sql);
+        if ($row = $result -> fetch_assoc())
+            $contentStr = $row["reply"];
 
         $resultStr = $this -> responseText($postObj, $contentStr);
         return $resultStr;
@@ -87,16 +87,15 @@ class wechatCallbackapi
         //$contentStr is the message we want to send back
         $contentStr = "";
 
-        //get the type of this event
+        //get the type and the key of this event
         $eventType = $postObj -> Event;
+        $eventKey = $postObj -> EventKey;
 
-        $result = $this -> mydb -> query("SELECT * FROM event");
-        while ($row = $result -> fetch_array())
-            if ($row["event"] == $eventType)
-            {
-                $contentStr = $row["reply"];
-                break;
-            }
+        $sql = "SELECT reply FROM event WHERE event = '%s' and eventKey = '%s'";
+        $sql = sprintf($sql, $eventType, $eventKey);
+        $result = $this -> mydb -> query($sql);
+        if ($row = $result -> fetch_assoc())
+            $contentStr = $row["reply"];
 
         $resultStr = $this -> responseText($postObj, $contentStr);
         return $resultStr;
