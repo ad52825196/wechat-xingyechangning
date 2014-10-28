@@ -26,7 +26,15 @@ class menu
 
     public function __construct($ACCESS_TOKEN)
     {
-        require_once 'menuButton.php';
+        if (isset($_SERVER["HTTP_APPNAME"])) //SAE
+        {
+            $storage = new SaeStorage();
+            $domain = "xycn";
+            $filename = "menu.txt";
+            $this -> menu = $storage -> read($domain, $filename);
+        }
+        else //LOCAL
+            $this -> menu = file_get_contents("menu.txt");
         $this -> MENU_CREATE_URL = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=".$ACCESS_TOKEN;
         $this -> MENU_GET_URL = "https://api.weixin.qq.com/cgi-bin/menu/get?access_token=".$ACCESS_TOKEN;
         $this -> MENU_DELETE_URL = "https://api.weixin.qq.com/cgi-bin/menu/delete?access_token=".$ACCESS_TOKEN;
