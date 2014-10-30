@@ -30,11 +30,11 @@ class menu
         {
             $storage = new SaeStorage();
             $domain = "xycn";
-            $filename = "menu.txt";
+            $filename = "menu.json";
             $this -> menu = $storage -> read($domain, $filename);
         }
         else //LOCAL
-            $this -> menu = file_get_contents("menu.txt");
+            $this -> menu = file_get_contents("menu.json");
         $this -> MENU_CREATE_URL = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=".$ACCESS_TOKEN;
         $this -> MENU_GET_URL = "https://api.weixin.qq.com/cgi-bin/menu/get?access_token=".$ACCESS_TOKEN;
         $this -> MENU_DELETE_URL = "https://api.weixin.qq.com/cgi-bin/menu/delete?access_token=".$ACCESS_TOKEN;
