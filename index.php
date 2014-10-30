@@ -10,6 +10,7 @@ else
 class Wechat
 {
     private $mydb;
+    //$postObj is the received data package
     private $postObj;
 
     public function __construct()
@@ -62,14 +63,34 @@ class Wechat
 
     private function handleText()
     {
-        //$keyword is the message from the user
+        //$content is the message from the user
         //$this -> postObj -> Content is created by user, so trim() method needs to be applied
-        $keyword = trim($this -> postObj -> Content);
+        $content = trim($this -> postObj -> Content);
 
-        $sql = "SELECT * FROM reply WHERE keyword = '%s' ORDER BY no";
-        $sql = sprintf($sql, $keyword);
+        $sql = "SELECT keyword FROM reply WHERE event = 'text' ORDER BY Length(keyword) DESC";
+        if ($result = $this -> mydb -> query($sql))
+        {
+            while ($row = $result -> fetch_assoc())
+            {
+                $pos = strpos($content, $row["keyword"]);
+                //strpos() function could return 0 which may also be recognised as false, so !== needs to be applied
+                if ($pos !== false)
+                {
+                    $keyword = $row["keyword"];
+                    break;
+                }
+            }
+            //if $row["keyword"] found in $content
+            if ($keyword)
+            {
+                $sql = "SELECT * FROM reply WHERE event = 'text' AND keyword = '%s' ORDER BY no";
+                $sql = sprintf($sql, $keyword);
 
-        return $this -> response($sql);
+                return $this -> response($sql);
+            }
+        }
+
+        return $resultStr;
     }
 
     private function handleEvent()
@@ -78,7 +99,7 @@ class Wechat
         $event = $this -> postObj -> Event;
         $keyword = $this -> postObj -> EventKey;
 
-        $sql = "SELECT * FROM reply WHERE event = '%s' and keyword = '%s' ORDER BY no";
+        $sql = "SELECT * FROM reply WHERE event = '%s' AND keyword = '%s' ORDER BY no";
         $sql = sprintf($sql, $event, $keyword);
 
         return $this -> response($sql);
