@@ -66,6 +66,8 @@ class Wechat
         //$content is the message from the user
         //$this -> postObj -> Content is created by user, so trim() method needs to be applied
         $content = trim($this -> postObj -> Content);
+        $search = array("a ", "an ", "the ", "的");
+        $content = str_ireplace($search, "", $content);
 
         $sql = "SELECT keyword FROM reply WHERE event = 'text' ORDER BY Length(keyword) DESC";
         if ($result = $this -> mydb -> query($sql))
