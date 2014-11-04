@@ -3,54 +3,50 @@ class accessToken
 {
     private $TOKEN_URL;
     private $tokenfile;
+    private $kv;
 
     public function __construct()
     {
         require_once 'appInfo.php';
         $this -> TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=".APPID."&secret=".APPSECRET;
+        if (isset($_SERVER["HTTP_APPNAME"])) //SAE
+        {
+            $this -> kv = new SaeKV();
+            $this -> kv -> init();
+        }
     }
 
     public function access_token()
     {
-        $refresh = true;
+        //get token if it exists
         if (isset($_SERVER["HTTP_APPNAME"])) //SAE
         {
-            $storage = new SaeStorage();
-            $domain = "xycn";
-            $json = $storage -> read($domain, $this -> tokenfile);
+            if ($ACCESS_TOKEN = $this -> kv -> get("access_token"))
+            {
+                $expires_in = $this -> kv -> get("expires_in");
+                $create_time = $this -> kv -> get("create_time");
+            }
         }
         else //LOCAL
-            $json = file_get_contents($this -> tokenfile);
-
-        //if file exists and token has not expired, get token from json file
-        if ($json)
         {
-            $result = json_decode($json);
-            $expires_in = $result -> expires_in;
-            $time = time();
-            if (isset($_SERVER["HTTP_APPNAME"])) //SAE
+            if ($json = file_get_contents($this -> tokenfile))
             {
-                $storage = new SaeStorage();
-                $domain = "xycn";
-                $attrKey = $storage -> getAttr($domain, $this -> tokenfile, array("datetime"));
-                $create_time = $attrKey["datetime"];
-            }
-            else //LOCAL
-                $create_time = filemtime($this -> tokenfile);
-            if ($time - $create_time < 0.9 * $expires_in)
-            {
+                $result = json_decode($json);
                 $ACCESS_TOKEN = $result -> access_token;
-                $refresh = false;
+                $expires_in = $result -> expires_in;
+                $create_time = filemtime($this -> tokenfile);
             }
         }
 
-        if ($refresh)
-            $ACCESS_TOKEN = $this -> get_access_token();
+        //token should not be expired
+        $time = time();
+        if (!$ACCESS_TOKEN || $time - $create_time > 0.9 * $expires_in)
+            $ACCESS_TOKEN = $this -> get();
 
         return $ACCESS_TOKEN;
     }
 
-    private function get_access_token()
+    private function get()
     {
         $json = file_get_contents($this -> TOKEN_URL);
         $result = json_decode($json);
@@ -59,13 +55,14 @@ class accessToken
             die($result -> errmsg);
         }
         $ACCESS_TOKEN = $result -> access_token;
+        $expires_in = $result -> expires_in;
 
-        //save token and expiry time into a json file
+        //save token information
         if (isset($_SERVER["HTTP_APPNAME"])) //SAE
         {
-            $storage = new SaeStorage();
-            $domain = "xycn";
-            $storage -> write($domain, $this -> tokenfile, $json);
+            $this -> kv -> set("access_token", $ACCESS_TOKEN);
+            $this -> kv -> set("expires_in", $expires_in);
+            $this -> kv -> set("create_time", time());
         }
         else //LOCAL
             file_put_contents($this -> tokenfile, $json);
