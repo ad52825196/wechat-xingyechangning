@@ -1,6 +1,6 @@
 Wechat for Xingye Changning
 ===========================
 
-This is the source code for the service account of Xingye Bank on Wechat.
+This is the source code for the service account of Industrial Bank Shanghai Changning Branch on Wechat.
 
-We want to show some information of our latest finance products and make it easy for our customers to communicate with us based on this public service account.
+We want to build a good platform to deliver latest information of our financial products and make it easy to communicate with customers.
